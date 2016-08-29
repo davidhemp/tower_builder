@@ -28,8 +28,9 @@ var playState = {
         game.add.text(700, uiUpper, "Money", {font: '20px'});
         moneyLabel = game.add.text(700, uiLower, "£" + this.scaleValue(money), {font: '20px'});
 
-        tileIncome = [20, 100, 300];
-        tileCost = [100, 3000, 10000];
+        tileIncome = [20, 100, null, 300];
+        tileCost = [100, 3000, null, 10000];
+        tileLength = [0,1, null ,2];
         income = 0;
         game.add.text(800, uiUpper, "Income", {font: '20px'});
         incomeLabel = game.add.text(800, uiLower, this.scaleValue(income),  {font: '20px'});
@@ -82,51 +83,55 @@ var playState = {
     },
 
     updateMarker: function() {
-        var x = layer.getTileX(game.input.activePointer.worldX) * tilesize;
-        var y = layer.getTileY(game.input.activePointer.worldY) * tilesize;
-        if (y < (mapsize[1])*tilesize || (x < tilesize*6 && y > (mapsize[1])*tilesize)){
-            marker.x = x;
-            marker.y = y;
+        var x = layer.getTileX(game.input.activePointer.worldX);
+        var y = layer.getTileY(game.input.activePointer.worldY);
+        if (y < (mapsize[1]) || (x < tilesize*6 && y > (mapsize[1]))){
+            marker.x = x*tilesize;
+            marker.y = y*tilesize;
         }
     },
 
 
     placeTile: function() {
         function checkmoney(){
-            if (cost < money){
-                for (i = 0; i <= currentTile; i++){
-                    map.putTile(currentTile+i, (marker.x/tilesize)+i, marker.y/tilesize, layer);
+            if (tileCost[currentTile] <= money){
+                for (i = 0; i <= tileLength[currentTile]; i++){
+                    map.putTile(currentTile + i, x + i, y, layer);
                 }
-                money -= cost;
+                money -= tileCost[currentTile];
                 income += tileIncome[currentTile];
             } else {
                 var warningText = game.add.text(20, 15, 'Not enough cash', {font: '20px', fill :'#ff0000'});
                 game.time.events.add(1000, function() {game.add.tween(warningText).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true);}, this);
             }
         }
-        tile = map.getTile(marker.x/tilesize, marker.y/tilesize, 'layer', true)
         //Check to see if placeble. 1, nothing there already. 2, something below it. 3, enough money to buy
-        if (tile.index < 0){
-            var cost = tileCost[currentTile];
-            if (tile.y == mapsize[1]-1){
-                checkmoney();
-            } else {
-                var build = true;
-                for (i = 0; i <= currentTile; i++){
-                    tilebelow = map.getTile(marker.x/tilesize + i,
-                                            marker.y/tilesize + 1,
-                                            'layer', true);
-                    if (tilebelow.index < 0){
-                        build = false;
-                    }
-                }
-                if (build == true){
-                    checkmoney();
-                } else {
-                    var warningText = game.add.text(20, 15, 'No enough support below', {font: '20px', fill :'#ff0000'});
-                    game.time.events.add(1000, function() {game.add.tween(warningText).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true);}, this);
+        var build = true;
+        var x = marker.x/tilesize;
+        var y = marker.y/tilesize;
+        var tile = map.getTile(x, y, 'layer', true);
+        if (tile.y == mapsize[1]-1){
+            for (i = 0; i <= tileLength[currentTile]; i++){
+                tileBuildLevel = map.getTile(x + i, y, 'layer', true);
+                if (tileBuildLevel.index >= 0){
+                    build = false;
                 }
             }
+        } else {
+            for (i = 0; i <= tileLength[currentTile]; i++){
+                tileBuildLevel = map.getTile(x + i, y, 'layer', true);
+                tileBelow = map.getTile(x + i, y + 1, 'layer', true);
+                if (tileBelow.index == -1 || tileBuildLevel.index >= 0){
+                    build = false;
+                }
+            }
+        }
+
+        if (build == true){
+            checkmoney();
+        } else {
+            var warningText = game.add.text(20, 15, 'Blocked or not supported', {font: '20px', fill :'#ff0000'});
+            game.time.events.add(1000, function() {game.add.tween(warningText).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true);}, this);
         }
         moneyLabel.text = "£" + this.scaleValue(money);
         incomeLabel.text = "£" + this.scaleValue(income);
@@ -147,7 +152,7 @@ var playState = {
             selector1.alpha = 0;
             selector2.alpha = 0;
             selector3.alpha = 1;
-            currentTile = 2;
+            currentTile = 3;
         }
         tileCostLabel.text = "Costs £" + this.scaleValue(tileCost[currentTile]);
         tileIncomeLabel.text = "Generates £" + this.scaleValue(tileIncome[currentTile]) + " per day";
