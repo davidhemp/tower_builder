@@ -1,12 +1,12 @@
 ﻿var playState = {
     create: function() {
-        mapsize = [38, 26];
+        mapsize = [38, 25];
         tilesize = 32;
-        uiLower = (mapsize[1]+2)*tilesize;
+        uiLower = (mapsize[1]+3)*tilesize;
         uiUpper = uiLower - tilesize;
         bgc = [0, 0, 0, 1]
         game.stage.backgroundColor = 'rgba(' + bgc[0] + ','+ bgc[1] + ',' + bgc[2] + ',' + bgc[3] + ')';
-        this.ground = game.add.sprite(0, mapsize[1]*tilesize, 'ground');
+        this.ground = game.add.sprite(0, (mapsize[1])*tilesize, 'ground');
 
         map = game.add.tilemap();
         map.addTilesetImage('tiles')
@@ -23,16 +23,16 @@
         layer.events.onInputDown.add(this.placeTile, this);
 
         var style = {font: '20px', fill :'#000000'}
-        money = 1000;
+        money = 100000;
         game.add.text(950, uiUpper, "Money", style);
-        moneyLabel = game.add.text(950, uiLower, "£" + this.scaleValue(money), style);
+        moneyLabel = game.add.text(950, uiLower, "£" + scaleValue(money), style);
 
-        tileIncome = [20, 100, null, 300];
-        tileCost = [100, 3000, null, 10000];
-        tileLength = [0,1, null ,2];
+        tileIncome = [20, 100, null, 300, null, null, 1000];
+        tileCost = [100, 3000, null, 10000, null, null, 10000];
+        tileLength = [0,1, null ,2, null, null, 2];
         income = 0;
         game.add.text(1050, uiUpper, "Income", style);
-        incomeLabel = game.add.text(1050, uiLower, this.scaleValue(income),  style);
+        incomeLabel = game.add.text(1050, uiLower, scaleValue(income),  style);
 
         reputation = 0;
         game.add.text(1150, uiUpper, "Reputation", style);
@@ -71,46 +71,80 @@
         var speedThree = game.add.sprite(1165, 170, 'arrow3');
         speedThree.inputEnabled = true;
         speedThree.events.onInputDown.add(function f(){tickSpeed=3;}, this);
+
+        debugMode = true;
+        var debugKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        debugKey.onDown.add(function f(){debugMode = !debugMode}, this);
+
+
     },
 
     createTileSelector: function () {
 
         //  Our tile selection window
-        var tileSelector = game.add.group();
 
-        var tileSelectorBackground = game.make.graphics();
-        tileSelectorBackground.beginFill("0xaaaaaa", 1);
-        tileSelectorBackground.drawRect(0, uiUpper, 1248, tilesize*2);
-        tileSelectorBackground.endFill();
+        var buildMenuBackground = game.make.graphics();
+        buildMenuBackground.beginFill("0xaaaaaa", 1);
+        buildMenuBackground.drawRect(0, uiUpper, 1248, tilesize*2);
+        buildMenuBackground.endFill();
 
-        tileSelector.add(tileSelectorBackground);
+        var categorySelector = game.add.group();
+        categorySelector.add(buildMenuBackground);
 
-        var tileStrip = tileSelector.create(0, uiUpper, 'tiles');
-        tileStrip.inputEnabled = true;
-        tileStrip.events.onInputDown.add(this.pickTile, this);
-        // tileStrip.events.onInputOver.add(this.tileDetails, this);
+        var categoryStrip = categorySelector.create(0, uiUpper, 'buildmenu');
+        categoryStrip.inputEnabled = true;
+        categoryStrip.events.onInputDown.add(this.pickCategory, this);
 
-        selector1 = game.add.graphics();
-        selector1.lineStyle(2, 0x000000, 1);
-        selector1.drawRect(0, uiUpper, tilesize, tilesize);
+        // var tileSelectorBackground = game.make.graphics();
+        // tileSelectorBackground.beginFill("0xFF0000", 1);
+        // tileSelectorBackground.drawRect(tilesize*0.2, uiUpper-tilesize*1.2, tilesize*6.6, tilesize*1.1);
+        // tileSelectorBackground.endFill();
+        //
+        flatGroup = game.add.group();
+        // flatGroup.add(tileSelectorBackground);
+        //
+        var flat1 = flatGroup.create(tilesize*0.3, uiUpper-tilesize*1.15, 'flat1');
+        var flat2 = flatGroup.create(tilesize*1.45, uiUpper-tilesize*1.15, 'flat2');
+        var flat3 = flatGroup.create(tilesize*3.6, uiUpper-tilesize*1.15, 'flat3');
+        flat1.inputEnabled = true;
+        flat1.events.onInputDown.add(this.pickTile, {tile:0});
+        flat2.inputEnabled = true;
+        flat2.events.onInputDown.add(this.pickTile, {tile:1});
+        flat3.inputEnabled = true;
+        flat3.events.onInputDown.add(this.pickTile, {tile:3});
+        flatGroup.visible = false;
 
-        selector2 = game.add.graphics();
-        selector2.lineStyle(2, 0x000000, 1);
-        selector2.drawRect(tilesize, uiUpper, tilesize*2, tilesize);
-        selector2.alpha = 0;
 
-        selector3 = game.add.graphics();
-        selector3.lineStyle(2, 0x000000, 1);
-        selector3.drawRect(tilesize*3, uiUpper, tilesize*3, tilesize);
-        selector3.alpha = 0;
+        restGroup = game.add.group();
+        // restGroup.add(tileSelectorBackground);
+
+        var rest1 = restGroup.create(tilesize*0.3, uiUpper-tilesize*1.15, 'rest1');
+        // var flat2 = flatGroup.create(tilesize*1.45, uiUpper-tilesize*1.15, 'flat2');
+        // var flat3 = flatGroup.create(tilesize*3.6, uiUpper-tilesize*1.15, 'flat3');
+        rest1.inputEnabled = true;
+        rest1.events.onInputDown.add(this.pickTile, {tile:6});
+        // flat2.inputEnabled = true;
+        // flat2.events.onInputDown.add(this.pickTile, {tile:1});
+        // flat3.inputEnabled = true;
+        // flat3.events.onInputDown.add(this.pickTile, {tile:3});
+        restGroup.visible = false;
+
     },
 
 //--------Update functions----------
 
     update: function() {
-        game.debug.text(bgc, 20, 20);
-        game.debug.text(dayNightCycle, 20, 40);
-        game.debug.text(currentTile, 20, 60);
+        if (debugMode == true){
+            var x = game.input.activePointer.worldX;
+            var y = game.input.activePointer.worldY;
+            game.debug.text("bgc: " + bgc, 20, 20);
+            game.debug.text("Time: " + dayNightCycle, 20, 40);
+            game.debug.text("Current tile: " + currentTile, 20, 60);
+            game.debug.text("x: " + x, 20, 80);
+            game.debug.text("y: " + y, 90, 80);
+        } else{
+            game.debug.text("", 0, 0);
+        }
         if (dayNightCycle < 300){
             if (bgc[0] < 160){
                 bgc[0] = bgc[0] + 3*tickSpeed;
@@ -139,8 +173,8 @@
             ampm.text = "am";
         } else if (dayNightCycle > 1800){
             money += income;
-            moneyLabel.text = "£" + this.scaleValue(money);
-            incomeLabel.text = "£" + this.scaleValue(income);
+            moneyLabel.text = "£" + scaleValue(money);
+            incomeLabel.text = "£" + scaleValue(income);
             dayNightCycle = 0;
         }
         dayNightCycle += tickSpeed;
@@ -158,6 +192,23 @@
         }
     },
 
+    pickCategory: function(){
+        var x = game.input.activePointer.worldX;
+        if (x <= 92){
+            flatGroup.visible = true;
+            restGroup.visible = false;
+        } else if (x <= 184){
+            flatGroup.visible = false;
+            restGroup.visible = true;
+        }
+
+    },
+
+    pickTile: function () {
+        currentTile = this.tile;
+        tileCostLabel.text = "Costs £" + scaleValue(tileCost[currentTile]);
+        tileIncomeLabel.text = "Generates £" + scaleValue(tileIncome[currentTile]) + " per day";
+    },
 
     placeTile: function() {
         function checkmoney(){
@@ -200,44 +251,7 @@
             var warningText = game.add.text(20, 15, 'Blocked or not supported', {font: '20px', fill :'#FF0000'});
             game.time.events.add(1000, function() {game.add.tween(warningText).to({alpha: 0}, 1000, Phaser.Easing.Linear.None, true);}, this);
         }
-        moneyLabel.text = "£" + this.scaleValue(money);
-        incomeLabel.text = "£" + this.scaleValue(income);
-    },
-
-    pickTile: function () {
-        currentTile = layer.getTileX(game.input.activePointer.worldX);
-
-        if (currentTile < 1){
-            selector1.alpha = 1;
-            selector2.alpha = 0;
-            selector3.alpha = 0;
-        } else if (currentTile < 3){
-            selector1.alpha = 0;
-            selector2.alpha = 1;
-            selector3.alpha = 0;
-            currentTile = 1;
-        } else if (currentTile < 6){
-            selector1.alpha = 0;
-            selector2.alpha = 0;
-            selector3.alpha = 1;
-            currentTile = 3;
-        }
-        tileCostLabel.text = "Costs £" + this.scaleValue(tileCost[currentTile]);
-        tileIncomeLabel.text = "Generates £" + this.scaleValue(tileIncome[currentTile]) + " per day";
-    },
-
-    scaleValue: function(value){
-        if (value >= 1000000){
-            value = game.math.roundTo(value/1000000, -2);
-            // value = value + "m";
-            unit = "m"
-        } else if (value > 1000){
-            value = game.math.roundTo(value / 1000, -2);
-            // value = value + "k";
-            unit = "k"
-        } else{
-            unit = ""
-        }
-        return value + unit;
+        moneyLabel.text = "£" + scaleValue(money);
+        incomeLabel.text = "£" + scaleValue(income);
     }
 }

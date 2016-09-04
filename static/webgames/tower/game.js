@@ -6,6 +6,21 @@ function addHexColor(c1, c2) {
   return hexStr;
 }
 
+function scaleValue(value){
+    if (value >= 1000000){
+        value = game.math.roundTo(value/1000000, -2);
+        // value = value + "m";
+        unit = "m"
+    } else if (value > 1000){
+        value = game.math.roundTo(value / 1000, -2);
+        // value = value + "k";
+        unit = "k"
+    } else{
+        unit = ""
+    }
+    return value + unit;
+}
+
 game.state.add('boot', bootState);
 game.state.add('load', loadState);
 game.state.add('menu', menuState);
