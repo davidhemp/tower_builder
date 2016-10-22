@@ -20,6 +20,7 @@ function scaleValue(value){
     }
     return value + unit;
 }
+Logger.useDefaults();
 
 game.state.add('boot', bootState);
 game.state.add('load', loadState);
